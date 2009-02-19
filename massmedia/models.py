@@ -175,7 +175,7 @@ class Media(models.Model):
                 except TemplateDoesNotExist:
                     return get_template('massmedia/generic.html')
 
-class Image(Media):
+class Image(models.Model):#(Media):
     file = models.ImageField(upload_to='img/%Y/%b/%d', blank=True, null=True)
     
     def thumb(self):
