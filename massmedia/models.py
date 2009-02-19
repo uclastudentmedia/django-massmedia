@@ -186,7 +186,7 @@ class Image(Media):
                 im = PilImage.open(self.file)
                 im.thumbnail(appsettings.THUMB_SIZE,PilImage.ANTIALIAS)
                 im.save(thumbnail,im.format)
-            return '<a href="%s"><img src="%s%s"/></a>'%\
+            return '<a href="%s"><img src="%simg/%s"/></a>'%\
                         (self.get_absolute_url(),settings.MEDIA_URL,thumburl)
         elif self.external_url:
             return '<a href="%s"><img src="%s"/></a>'%\
