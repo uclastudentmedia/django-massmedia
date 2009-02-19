@@ -91,7 +91,7 @@ class Media(models.Model):
 
     class Meta:
         ordering = ('-creation_date',)
-        abstract = True
+        #abstract = True
         
     def __unicode__(self):
         return self.title
