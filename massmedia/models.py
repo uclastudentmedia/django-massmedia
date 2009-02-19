@@ -91,7 +91,7 @@ class Media(models.Model):
 
     class Meta:
         ordering = ('-creation_date',)
-        #abstract = True
+        abstract = True
         
     def __unicode__(self):
         return self.title
@@ -109,12 +109,12 @@ class Media(models.Model):
     def absolute_url(self, format):
         raise NotImplementedError
     
-    #def save(self, *args, **kwargs):
-    #    if self.file and not self.mime_type:
-    #        self.mime_type = mimetypes.guess_type(self.file.path)[0]
-    #    if not(self.metadata) and self.file and extractMetadata:
-    #        self.parse_metadata()
-    #    super(Media, self).save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if self.file and not self.mime_type:
+            self.mime_type = mimetypes.guess_type(self.file.path)[0]
+        if not(self.metadata) and self.file and extractMetadata:
+            self.parse_metadata()
+        super(Media, self).save(*args, **kwargs)
     
     def parse_metadata(self):
         try:
@@ -175,7 +175,7 @@ class Media(models.Model):
                 except TemplateDoesNotExist:
                     return get_template('massmedia/generic.html')
 
-class Image(models.Model):#(Media):
+class Image(Media):
     file = models.ImageField(upload_to='img/%Y/%b/%d', blank=True, null=True)
     
     def thumb(self):
