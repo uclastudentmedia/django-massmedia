@@ -181,7 +181,8 @@ class Image(Media):
     def thumb(self):
         if self.file:
             thumbnail = '%s.thumb%s'%os.path.splitext(self.file.path)
-            thumburl = thumbnail[len(settings.MEDIA_ROOT)+1:]
+            thumburl = thumbnail[len(settings.MEDIA_ROOT):]
+            print thumbnail,thumburl
             if not os.path.exists(thumbnail):
                 im = PilImage.open(self.file)
                 im.thumbnail(appsettings.THUMB_SIZE,PilImage.ANTIALIAS)
