@@ -88,8 +88,8 @@ class Media(models.Model):
     height = models.IntegerField(blank=True, null=True, help_text="The height of the widget for the media")
     widget_template = models.CharField(max_length=255,blank=True,null=True,
                 help_text='The template name used to generate the widget (defaults to mime_type layout)')
-    
-    class META:
+
+    class Meta:
         ordering = ('-creation_date',)
         abstract = True
         
