@@ -1,4 +1,4 @@
-var opts = 'width=700,height=400,scrollbars=yes,scrolling=yes,location=no,toolbar=no';
+var opts = 'width=800,height=400,scrollbars=yes,scrolling=yes,location=no,toolbar=no';
 
 //Audio
 var MassAudioCommand=function(){};
@@ -8,7 +8,7 @@ MassAudioCommand.Execute=function() {
 }
 FCKCommands.RegisterCommand('MassAudio', MassAudioCommand ); 
 var oMassAudios = new FCKToolbarButton('MassAudio', 'insert audio');
-oMassAudios.IconPath = FCKConfig.PluginsPath + 'fckmassmedia/audio.gif'; 
+oMassAudios.IconPath = FCKConfig.PluginsPath + 'fckmassmedia/audio.png'; 
 FCKToolbarItems.RegisterItem( 'MassAudio', oMassAudios );
 
 //Video
@@ -19,7 +19,7 @@ MassVideoCommand.Execute=function() {
 }
 FCKCommands.RegisterCommand('MassVideo', MassVideoCommand ); 
 var oMassVideos = new FCKToolbarButton('MassVideo', 'insert media');
-oMassVideos.IconPath = FCKConfig.PluginsPath + 'fckmassmedia/video.gif'; 
+oMassVideos.IconPath = FCKConfig.PluginsPath + 'fckmassmedia/video.png'; 
 FCKToolbarItems.RegisterItem( 'MassVideo', oMassVideos );
 
 //Image
@@ -30,7 +30,7 @@ MassImageCommand.Execute=function() {
 }
 FCKCommands.RegisterCommand('MassImage', MassImageCommand ); 
 var oMassImages = new FCKToolbarButton('MassImage', 'insert image');
-oMassImages.IconPath = FCKConfig.PluginsPath + 'fckmassmedia/image.gif'; 
+oMassImages.IconPath = FCKConfig.PluginsPath + 'fckmassmedia/image.png'; 
 FCKToolbarItems.RegisterItem( 'MassImage', oMassImages );
 
 //Flash
@@ -41,7 +41,7 @@ MassFlashCommand.Execute=function() {
 }
 FCKCommands.RegisterCommand('MassFlash', MassFlashCommand ); 
 var oMassFlashs = new FCKToolbarButton('MassFlash', 'insert flash');
-oMassFlashs.IconPath = FCKConfig.PluginsPath + 'fckmassmedia/flash.gif'; 
+oMassFlashs.IconPath = FCKConfig.PluginsPath + 'fckmassmedia/flash.png'; 
 FCKToolbarItems.RegisterItem( 'MassFlash', oMassFlashs );
 
 // Handles related-objects functionality: lookup link for raw_id_fields
@@ -74,6 +74,7 @@ function windowname_to_id(text) {
 }
 
 function showRelatedObjectLookupPopup(triggeringLink) {
+    return false;
     var name = triggeringLink.id.replace(/^lookup_/, '');
     name = id_to_windowname(name);
     var href;
@@ -82,23 +83,76 @@ function showRelatedObjectLookupPopup(triggeringLink) {
     } else {
         href = triggeringLink.href + '?pop=1';
     }
-    var win = window.open(href, name, 'height=500,width=800,resizable=yes,scrollbars=yes');
+    var win = window.open(href, name, opts);
     win.focus();
     return false;
 }
+function insert_content(url, editor){
+    var page_request = false;
+    if (window.XMLHttpRequest) 
+        page_request = new XMLHttpRequest();
+    else if (window.ActiveXObject){ 
+        try {
+            page_request = new ActiveXObject("Msxml2.XMLHTTP");
+        } 
+        catch (e){
+            try{
+                page_request = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            catch (e){
+                alert(e);
+            }
+        }
+    } else
+        return false;
+    page_request.onreadystatechange=function(){
+        loadpage(page_request, editor);
+    }
+    page_request.open('GET', url, true);
+    page_request.send(null);
+    return true;
+}
 
-function dismissRelatedLookupPopup(win, chosenId) {
-    var name = windowname_to_id(win.name);
-    var elem = document.getElementById(name);
-    if (elem.className.indexOf('vManyToManyRawIdAdminField') != -1 && elem.value) {
-        elem.value += ',' + chosenId;
-    } else {
-        document.getElementById(name).value = chosenId;
+function loadpage(page_request, editor){
+    if (page_request.readyState == 4 && (page_request.status==200 || window.location.href.indexOf("http")==-1))
+        alert(page_request.responseText);
+        editor.InsertHtml(page_request.responseText);
+}
+
+function load_widget(win, id){
+    name = id_to_windowname(win.name);
+    if (name == 'MassAudio')
+            type = 'audio';
+    else if (name == 'MassImage')
+            type = 'image';
+    else if (name == 'MassFlash')
+            type = 'flash';
+    else if (name == 'MassVideo')
+            type = 'video';
+    url = '/massmedia/widget/' + id + '/' + type + '/';
+    var allPageTags = win.opener.parent.document.getElementsByTagName("textarea");
+    for (i = 0; i < allPageTags.length; i++) {
+            if (allPageTags[i].className == "vLargeTextField") {
+                try{
+                    var oEditor = FCKeditorAPI.GetInstance(allPageTags[i].id) ;
+                    oEditor.InsertHtml('<iframe id="'+ type + id +'" scrolling="no" frameborder="0" vspace="0" hspace="0" marginheight="0" marginwidth="0" src="'+ url +'"></iframe>');
+                    //insert_content(url, oEditor);
+                    break;
+                } catch(e){
+                    alert(e);
+                    continue;
+                }
+            }
     }
     win.close();
 }
 
+function dismissRelatedLookupPopup(win, chosenId) {
+    return load_widget(win, chosenId);
+}
+
 function showAddAnotherPopup(triggeringLink) {
+    return false;
     var name = triggeringLink.id.replace(/^add_/, '');
     name = id_to_windowname(name);
     href = triggeringLink.href
@@ -107,12 +161,18 @@ function showAddAnotherPopup(triggeringLink) {
     } else {
         href  += '&_popup=1';
     }
-    var win = window.open(href, name, 'height=500,width=800,resizable=yes,scrollbars=yes');
+    var win = window.open(href, name, opts);
     win.focus();
     return false;
 }
 
 function dismissAddAnotherPopup(win, newId, newRepr) {
+    return load_widget(win, newId);
+
+    return false;
+    var oEditor = win.InnerDialogLoaded().FCK ;
+    oEditor.InsertHtml(newId);
+    return false;
     // newId and newRepr are expected to have previously been escaped by
     // django.utils.html.escape.
     newId = html_unescape(newId);
