@@ -181,13 +181,12 @@ class Image(Media):
     def thumb(self):
         if self.file:
             thumbnail = '%s.thumb%s'%os.path.splitext(self.file.path)
-            thumburl = thumbnail[len(settings.MEDIA_ROOT):]
-            print thumbnail,thumburl
+            thumburl = thumbnail[len(settings.MEDIA_ROOT)-1:]
             if not os.path.exists(thumbnail):
                 im = PilImage.open(self.file)
                 im.thumbnail(appsettings.THUMB_SIZE,PilImage.ANTIALIAS)
                 im.save(thumbnail,im.format)
-            return '<a href="%s"><img src="%simg/%s"/></a>'%\
+            return '<a href="%s"><img src="%s%s"/></a>'%\
                         (self.get_absolute_url(),settings.MEDIA_URL,thumburl)
         elif self.external_url:
             return '<a href="%s"><img src="%s"/></a>'%\
