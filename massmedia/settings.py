@@ -14,3 +14,7 @@ THUMB_SIZE = (100,80)
 EXTRA_MIME_TYPES = {
     '.flv':'video/x-flv',
 }
+
+# Template mode, either of the fs or through the admin
+ADMIN,FILE_SYSTEM = 0,1
+TEMPLATE_MODE = FILE_SYSTEM

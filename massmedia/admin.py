@@ -1,7 +1,9 @@
 from django.contrib import admin
-from massmedia.models import Image,Video,Audio,Flash,Collection,CollectionRelation
+from massmedia.models import Image,Video,Audio,Flash,Collection,\
+    CollectionRelation,MediaTemplate
 from django.contrib.contenttypes.models import ContentType
 from django.template.defaultfilters import slugify
+from massmedia import settings
 
 class GenericCollectionInlineModelAdmin(admin.options.InlineModelAdmin):
     ct_field = "content_type"
@@ -29,6 +31,10 @@ class MediaAdmin(object):
         ('Content',{'fields':('external_url','file')}),
         ('Connections',{'fields':('public','categories','sites')}),
         ('Widget',{'fields':('width','height')}),
+        ('Advanced options', {
+            'classes': ('collapse',),
+            'fields': ('widget_template',)
+        }),
     )
     list_display = ('title', 'author', 'mime_type', 'public', 'creation_date')
     list_filter = ('sites', 'creation_date','public')
@@ -36,9 +42,11 @@ class MediaAdmin(object):
     date_hierarchy = 'creation_date'
     search_fields = ('caption', 'file')
 
+
 class ImageAdmin(MediaAdmin,admin.ModelAdmin):
     list_display = ('title','thumb','author','mime_type','metadata','public','creation_date')
 class VideoAdmin(MediaAdmin,admin.ModelAdmin):
+    list_display = ('title','thumb','author','mime_type','metadata','public','creation_date')
     fieldsets = MediaAdmin.fieldsets + ( ('Thumbnail',{'fields':('thumbnail',)}), )
     raw_id_fields = ('thumbnail',)
 class AudioAdmin(MediaAdmin,admin.ModelAdmin): pass
@@ -64,3 +72,6 @@ admin.site.register(Video, VideoAdmin)
 admin.site.register(Audio, AudioAdmin)
 admin.site.register(Flash, FlashAdmin)
 admin.site.register(CollectionRelation)
+
+if settings.TEMPLATE_MODE == settings.ADMIN:
+    admin.site.register(MediaTemplate)

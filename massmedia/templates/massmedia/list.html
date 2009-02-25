@@ -1,9 +1,8 @@
-{% load media_widgets %}
 
 {% if objects %}
 <ul>
 {% for media in objects %}
-    <li><b>{{ media }}</b><br><blockquote>{% show_media media %}</blockquote></li>
+    <li><b>{{ media }}</b><br><blockquote>{{ media.render_template }}</blockquote></li>
 {% endfor %}
 </ul>
 {% else %}

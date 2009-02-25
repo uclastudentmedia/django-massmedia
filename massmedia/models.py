@@ -7,8 +7,7 @@ from django.template.defaultfilters import slugify
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.template.loader import get_template
-from django.template import TemplateDoesNotExist
-
+from django.template import TemplateDoesNotExist,Template,Context
 from massmedia import settings as appsettings
 from cStringIO import StringIO
 import mimetypes
@@ -22,6 +21,11 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
+try:
+    from iptcinfo import IPTCInfo
+    iptc = 1
+except ImportError:
+    iptc = 0
 try:
     # Try to use http://code.google.com/p/django-categories/
     from categories.models import Category
@@ -43,6 +47,37 @@ try:
 except ImportError:
     extractMetadata = None
 
+
+def parse_metadata(path):
+    try:
+        parser = createParser(unicode(path))
+    except InputStreamError:           
+        return
+    if not parser:
+        return
+    try:
+        metadata = extractMetadata(parser, appsettings.INFO_QUALITY)
+    except HachoirError:
+        return
+    if not metadata:
+        return
+    data = {}
+    text = metadata.exportPlaintext(priority=None, human=False)           
+    for line in text:
+        if not line.strip().startswith('-'):
+            key = line.strip().lower().split(':')[0]
+            value = []
+        else:
+            key = line.strip().split('- ')[1].split(': ')[0]
+            value = line.split(key)[1][2:]
+            if key in data:
+                if hasattr(data[key],'__iter__'):
+                    value = data[key] + [value]
+                else:
+                    value = [data[key],value]
+        if value:
+            data[key] = value
+    return data
 
 class PickledObject(str): pass
 
@@ -86,6 +121,7 @@ class Media(models.Model):
     mime_type = models.CharField(max_length=150,blank=True,null=True)
     width = models.IntegerField(blank=True, null=True, help_text="The width of the widget for the media")
     height = models.IntegerField(blank=True, null=True, help_text="The height of the widget for the media")
+    
     widget_template = models.CharField(max_length=255,blank=True,null=True,
                 help_text='The template name used to generate the widget (defaults to mime_type layout)')
 
@@ -113,46 +149,10 @@ class Media(models.Model):
         if self.file and not self.mime_type:
             self.mime_type = mimetypes.guess_type(self.file.path)[0]
         if not(self.metadata) and self.file and extractMetadata:
-            self.parse_metadata()
+            self.metadata = parse_metadata(self.file.path) or ''
         super(Media, self).save(*args, **kwargs)
     
-    def parse_metadata(self):
-        try:
-            parser = createParser(self.file.path)
-        except InputStreamError:           
-            return
-        if not parser:
-            return
-        try:
-            metadata = extractMetadata(parser, appsettings.INFO_QUALITY)
-        except HachoirError:
-            return
-        if not metadata:
-            return
-        data = {}
-        text = metadata.exportPlaintext(priority=None, human=False)           
-        for line in text:
-            if not line.strip().startswith('-'):
-                key = line.strip().lower().split(':')[0]
-                value = []
-            else:
-                key = line.strip().split('- ')[1].split(': ')[0]
-                value = line.split(key)[1][2:]
-                if key in data:
-                    if hasattr(data[key],'__iter__'):
-                        value = data[key] + [value]
-                    else:
-                        value = [data[key],value]
-            if value:
-                data[key] = value                         
-        if not self.mime_type and 'mime_type' in data:
-            self.mime_type = data['mime_type']                
-        if not self.height and 'height' in data:
-            self.height = data['height']
-        if not self.width and 'width' in data:
-            self.width = data['width'] 
-        self.metadata = data
-
+    
     def get_mime_type(self):
         if self.mime_type:
             return self.mime_type
@@ -163,20 +163,49 @@ class Media(models.Model):
     def get_template(self):
         mime_type = self.get_mime_type()
         if self.widget_template:
-            return get_template(self.widget_template)
+            if appsettings.TEMPLATE_MODE == appsettings.FILE_SYSTEM:
+                return get_template(self.widget_template)
+            else:
+                return MediaTemplate.objects.get(name=self.widget_template).template()
         elif mime_type is None:
-            return get_template('massmedia/generic.html')
+            if appsettings.TEMPLATE_MODE == appsettings.FILE_SYSTEM:
+                return get_template('massmedia/generic.html')
+            else:
+                return MediaTemplate.objects.get(mimetype='').tempate()
         else:
-            try:
-                return get_template('massmedia/%s.html'%mime_type)
-            except TemplateDoesNotExist:
+            if appsettings.TEMPLATE_MODE == appsettings.FILE_SYSTEM:
                 try:
-                    return get_template('massmedia/%s/generic.html'%mime_type.split('/')[0])
+                    return get_template('massmedia/%s.html'%mime_type)
                 except TemplateDoesNotExist:
-                    return get_template('massmedia/generic.html')
-
+                    try:
+                        return get_template('massmedia/%s/generic.html'%mime_type.split('/')[0])
+                    except TemplateDoesNotExist:
+                        return get_template('massmedia/generic.html')
+            else:
+                try:
+                    return MediaTemplate.objects.get(mimetype=mime_type)
+                except MediaTemplate.DoesNotExist:
+                    try:
+                        return MediaTemplate.objects.get(mimetype=mime_type.split('/')[0])
+                    except MediaTemplate.DoesNotExist:
+                        return MediaTemplate.objects.get(mimetype='').tempate()
+       
+    def render_template(self): 
+        return self.get_template().render(Context({
+            'media':self,
+            'MEDIA_URL':settings.MEDIA_URL
+        }))
+        
 class Image(Media):
     file = models.ImageField(upload_to='img/%Y/%b/%d', blank=True, null=True)
+    
+    def save(self, *args, **kwargs):
+        if iptc:
+            try:
+                data.update(IPTCInfo(path).__dict__['_data'])
+            except:
+                pass
+        super(Image, self).save(*args, **kwargs)
     
     def thumb(self):
         if self.file:
@@ -200,6 +229,11 @@ class Image(Media):
 class Video(Media):
     file = models.FileField(upload_to='video/%Y/%b/%d', blank=True, null=True)
     thumbnail = models.ForeignKey(Image, null=True, blank=True)
+    
+    def thumb(self):
+        return self.thumbnail.thumb()
+    thumb.allow_tags = True
+    thumb.short_description = 'Thumbnail'
     
     def absolute_url(self, format):
         return "%svideo/%s/%s" % format
@@ -287,5 +321,17 @@ class CollectionRelation(models.Model):
     content_type = models.ForeignKey(ContentType, limit_choices_to=collection_limits)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
+    
     def __unicode__(self):
         return unicode(self.content_object)
+        
+class MediaTemplate(models.Model):
+    name = models.CharField(max_length=255)
+    mimetype = models.CharField(max_length=255,null=True,blank=True)
+    content = models.TextField()
+    
+    def __unicode__(self):
+        return self.name
+    
+    def template(self):
+        return Template(self.content)
