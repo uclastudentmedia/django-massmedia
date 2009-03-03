@@ -26,6 +26,7 @@ try:
     iptc = 1
 except ImportError:
     iptc = 0
+    
 try:
     # Try to use http://code.google.com/p/django-categories/
     from categories.models import Category
@@ -34,10 +35,14 @@ except ImportError:
     class Category(models.Model):
         name = models.CharField(max_length=150)
         def __unicode__(self): return self.name
+        
 try:
     import Image as PilImage
 except ImportError:
-    from PIL import Image as PilImage
+    try:
+        from PIL import Image as PilImage
+    except ImportError:
+        PilImage = 0
 
 try:
     from hachoir_core.error import HachoirError
