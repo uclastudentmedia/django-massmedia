@@ -118,7 +118,7 @@ class Media(models.Model):
     credit = models.CharField(max_length=150, blank=True)
     caption = models.TextField(blank=True)
     metadata = PickledObjectField(blank=True)
-    sites = models.ManyToManyField(Site,related_name='media_sites')
+    sites = models.ManyToManyField(Site,related_name='%(class)s_sites')
     categories = models.ManyToManyField(Category, blank=True)
     reproduction_allowed = models.BooleanField("we have reproduction rights for this media", default=True)
     public = models.BooleanField(help_text="this media is publicly available", default=True)
