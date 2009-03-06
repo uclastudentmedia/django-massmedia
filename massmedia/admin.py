@@ -1,6 +1,6 @@
 from django.contrib import admin
 from massmedia.models import Image,Video,Audio,Flash,Collection,\
-    CollectionRelation,MediaTemplate
+    CollectionRelation,MediaTemplate,VoxantVideo
 from django.contrib.contenttypes.models import ContentType
 from django.template.defaultfilters import slugify
 from massmedia import settings
@@ -45,10 +45,20 @@ class MediaAdmin(object):
 
 class ImageAdmin(MediaAdmin,admin.ModelAdmin):
     list_display = ('title','thumb','author','mime_type','metadata','public','creation_date')
+
 class VideoAdmin(MediaAdmin,admin.ModelAdmin):
     list_display = ('title','thumb','author','mime_type','metadata','public','creation_date')
     fieldsets = MediaAdmin.fieldsets + ( ('Thumbnail',{'fields':('thumbnail',)}), )
     raw_id_fields = ('thumbnail',)
+
+class VoxantVideoAdmin(VideoAdmin):
+    list_display = ('asset_id',) + VideoAdmin.list_display
+    fieldsets = ( ('Voxant',{'fields':('asset_id',)}), )
+    for fieldset in VideoAdmin.fieldsets:
+        if fieldset[0] == 'Content':
+            continue
+        fieldsets += (fieldset,)
+    
 class AudioAdmin(MediaAdmin,admin.ModelAdmin): pass
 class FlashAdmin(MediaAdmin,admin.ModelAdmin): pass
 
@@ -71,6 +81,7 @@ admin.site.register(Image, ImageAdmin)
 admin.site.register(Video, VideoAdmin)
 admin.site.register(Audio, AudioAdmin)
 admin.site.register(Flash, FlashAdmin)
+admin.site.register(VoxantVideo, VoxantVideoAdmin)
 admin.site.register(CollectionRelation)
 
 if settings.TEMPLATE_MODE == settings.ADMIN:

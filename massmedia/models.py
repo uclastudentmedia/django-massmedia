@@ -174,7 +174,10 @@ class Media(models.Model):
                 return MediaTemplate.objects.get(name=self.widget_template).template()
         elif mime_type is None:
             if appsettings.TEMPLATE_MODE == appsettings.FILE_SYSTEM:
-                return get_template('massmedia/generic.html')
+                if isinstance(self, VoxantVideo):
+                    return get_template('massmedia/voxant.html')
+                else:
+                    return get_template('massmedia/generic.html')
             else:
                 return MediaTemplate.objects.get(mimetype='').tempate()
         else:
@@ -242,6 +245,12 @@ class Video(Media):
     
     def absolute_url(self, format):
         return "%svideo/%s/%s" % format
+
+class VoxantVideo(Video):
+    asset_id = models.CharField(max_length=255,help_text='Voxant video asset ID')
+    
+    def absolute_url(self, format):
+        return "%svoxantvideo/%s/%s" % format
     
 class Audio(Media):
     file = models.FileField(upload_to='audio/%Y/%b/%d', blank=True, null=True)
