@@ -4,14 +4,19 @@ from massmedia.models import VoxantVideo
 
 register = template.Library()
 
-def show_media(media):
-    return media.get_template().render(template.Context({
-        'media':media,
-        'MEDIA_URL':settings.MEDIA_URL
+class MassMediaNode(template.Node):
+    def __init__(self, *args):
+        assert len(args)
+        self.args = list(args)
+    
+    def render(self, context):
+        self.args[0] = context.get(self.args[0],self.args[0])
+        if isinstance(self.args[0], basestring):
+            self.args[0] = VoxantVideo.objects.get(asset_id=self.args[0])
+        return self.args[0].get_template().render(template.RequestContext(context['request'], {
+        'media':self.args[0],
     }))
+def show_media(parser, token):
+    return MassMediaNode(*token.contents.split()[1:])
     
-def voxant(asset_id):
-    return show_media(VoxantVideo.objects.get(asset_id=asset_id))
-    
-register.simple_tag(show_media)
-register.simple_tag(voxant)
+register.tag(show_media)

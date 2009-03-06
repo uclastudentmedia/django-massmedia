@@ -247,7 +247,8 @@ class Video(Media):
         return "%svideo/%s/%s" % format
 
 class VoxantVideo(Video):
-    asset_id = models.CharField(max_length=255,help_text='Voxant video asset ID')
+    asset_id = models.CharField(max_length=255,help_text='Voxant video asset ID (the `a` parameter)')
+    layout_id = models.CharField(max_length=255,help_text='Voxant video asset ID (the `m` parameter)')
     
     def absolute_url(self, format):
         return "%svoxantvideo/%s/%s" % format

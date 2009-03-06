@@ -52,8 +52,8 @@ class VideoAdmin(MediaAdmin,admin.ModelAdmin):
     raw_id_fields = ('thumbnail',)
 
 class VoxantVideoAdmin(VideoAdmin):
-    list_display = ('asset_id',) + VideoAdmin.list_display
-    fieldsets = ( ('Voxant',{'fields':('asset_id',)}), )
+    list_display = ('asset_id','layout_id') + VideoAdmin.list_display
+    fieldsets = ( ('Voxant',{'fields':('asset_id','layout_id')}), )
     for fieldset in VideoAdmin.fieldsets:
         if fieldset[0] == 'Content':
             continue
