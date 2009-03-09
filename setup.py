@@ -4,7 +4,7 @@ setup(
     name='django-massmedia',
     version = '0.1',
     description = 'Allows for site staff can upload and edit the media files through the site, and the filesystem is maintained in the background.',
-    author='Weston Nielson',
+    author='Populous',
     url='https://code.launchpad.net/~wnielson/django-massmedia/devel',
     packages=find_packages(),
     classifiers=[
