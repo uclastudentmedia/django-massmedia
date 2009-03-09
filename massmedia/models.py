@@ -26,11 +26,13 @@ try:
     iptc = 1
 except ImportError:
     iptc = 0
-    
-try:
-    # Try to use http://code.google.com/p/django-categories/
-    from categories.models import Category
-except ImportError:
+
+
+# Try to load a user-defined category model
+if getattr(settings, 'MASSMEDIA_CATEGORIES_MODULE', False):
+    app_label, model_name = settings.MASSMEDIA_CATEGORIES_MODULE.split('.')
+    Category = models.get_model(app_label, model_name)
+else:
     # Otherwise use dummy category
     class Category(models.Model):
         name = models.CharField(max_length=150)
