@@ -252,20 +252,29 @@ class Video(Media):
     def absolute_url(self, format):
         return "%svideo/%s/%s" % format
 
-class VoxantVideo(Video):
-    asset_id = models.CharField(max_length=255,help_text='Voxant video asset ID (the `a` parameter)')
-    layout_id = models.CharField(max_length=255,help_text='Voxant video asset ID (the `m` parameter)')
-    
-    def absolute_url(self, format):
-        return "%svoxantvideo/%s/%s" % format
+if getattr(settings, 'MASSMEDIA_USE_VOXTANT', False):
+    class VoxantVideo(Video):
+        asset_id = models.CharField(max_length=255,help_text='Voxant video asset ID (the `a` parameter)')
+        layout_id = models.CharField(max_length=255,help_text='Voxant video asset ID (the `m` parameter)')
+        
+        def absolute_url(self, format):
+            return "%svoxantvideo/%s/%s" % format
     
 class Audio(Media):
     file = models.FileField(upload_to='audio/%Y/%b/%d', blank=True, null=True)
+    
+    class Meta:
+        verbose_name_plural = 'audio'
+    
     def absolute_url(self, format):
         return "%saudio/%s/%s" % format
 
 class Flash(Media):
     file = models.FileField(upload_to='flash/%Y/%b/%d', blank=True, null=True)
+    
+    class Meta:
+        verbose_name_plural = 'flash'
+    
     def absolute_url(self, format):
         return "%sflash/%s/%s" % format
     

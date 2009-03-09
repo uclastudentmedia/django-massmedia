@@ -1,9 +1,12 @@
 from django.contrib import admin
-from massmedia.models import Image,Video,Audio,Flash,Collection,\
-    CollectionRelation,MediaTemplate,VoxantVideo
+from massmedia.models import Image, Video, Audio, Flash, Collection,\
+    CollectionRelation, MediaTemplate
 from django.contrib.contenttypes.models import ContentType
 from django.template.defaultfilters import slugify
 from massmedia import settings
+
+if getattr(settings, 'MASSMEDIA_USE_VOXTANT', False):    
+    from massmedia.models import VoxantVideo
 
 class GenericCollectionInlineModelAdmin(admin.options.InlineModelAdmin):
     ct_field = "content_type"
@@ -51,13 +54,14 @@ class VideoAdmin(MediaAdmin,admin.ModelAdmin):
     fieldsets = MediaAdmin.fieldsets + ( ('Thumbnail',{'fields':('thumbnail',)}), )
     raw_id_fields = ('thumbnail',)
 
-class VoxantVideoAdmin(VideoAdmin):
-    list_display = ('asset_id','layout_id') + VideoAdmin.list_display
-    fieldsets = ( ('Voxant',{'fields':('asset_id','layout_id')}), )
-    for fieldset in VideoAdmin.fieldsets:
-        if fieldset[0] == 'Content':
-            continue
-        fieldsets += (fieldset,)
+if getattr(settings, 'MASSMEDIA_USE_VOXTANT', False):
+    class VoxantVideoAdmin(VideoAdmin):
+        list_display = ('asset_id','layout_id') + VideoAdmin.list_display
+        fieldsets = ( ('Voxant',{'fields':('asset_id','layout_id')}), )
+        for fieldset in VideoAdmin.fieldsets:
+            if fieldset[0] == 'Content':
+                continue
+            fieldsets += (fieldset,)
     
 class AudioAdmin(MediaAdmin,admin.ModelAdmin): pass
 class FlashAdmin(MediaAdmin,admin.ModelAdmin): pass
@@ -81,7 +85,10 @@ admin.site.register(Image, ImageAdmin)
 admin.site.register(Video, VideoAdmin)
 admin.site.register(Audio, AudioAdmin)
 admin.site.register(Flash, FlashAdmin)
-admin.site.register(VoxantVideo, VoxantVideoAdmin)
+
+if getattr(settings, 'MASSMEDIA_USE_VOXTANT', False):
+    admin.site.register(VoxantVideo, VoxantVideoAdmin)
+
 admin.site.register(CollectionRelation)
 
 if settings.TEMPLATE_MODE == settings.ADMIN:
