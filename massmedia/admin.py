@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.template.defaultfilters import slugify
 from massmedia import settings
 
-if settings.USE_VOXTANT:    
+if settings.USE_VOXANT:    
     from massmedia.models import VoxantVideo
 
 class GenericCollectionInlineModelAdmin(admin.options.InlineModelAdmin):
@@ -54,7 +54,7 @@ class VideoAdmin(MediaAdmin,admin.ModelAdmin):
     fieldsets = MediaAdmin.fieldsets + ( ('Thumbnail',{'fields':('thumbnail',)}), )
     raw_id_fields = ('thumbnail',)
 
-if settings.USE_VOXTANT:
+if settings.USE_VOXANT:
     class VoxantVideoAdmin(VideoAdmin):
         list_display = ('asset_id','layout_id') + VideoAdmin.list_display
         fieldsets = ( ('Voxant',{'fields':('asset_id','layout_id')}), )

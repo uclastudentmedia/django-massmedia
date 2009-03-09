@@ -2,7 +2,7 @@ from django.conf import settings
 
 CATEGORIES_MODULE = getattr(settings, 'MASSMEDIA_CATEGORIES_MODULE', False)
 
-USE_VOXTANT = getattr(settings, 'MASSMEDIA_USE_VOXTANT', False)
+USE_VOXANT = getattr(settings, 'MASSMEDIA_USE_VOXANT', False)
 
 # Valid media extensions, edit at your own risk
 IMAGE_EXTS = getattr(settings, 'MASSMEDIA_IMAGE_EXTS', (
