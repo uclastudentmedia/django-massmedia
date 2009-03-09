@@ -29,8 +29,8 @@ except ImportError:
 
 
 # Try to load a user-defined category model
-if getattr(settings, 'MASSMEDIA_CATEGORIES_MODULE', False):
-    app_label, model_name = settings.MASSMEDIA_CATEGORIES_MODULE.split('.')
+if appsettings.CATEGORIES_MODULE:
+    app_label, model_name = appsettings.CATEGORIES_MODULE.split('.')
     Category = models.get_model(app_label, model_name)
 else:
     # Otherwise use dummy category
@@ -252,7 +252,7 @@ class Video(Media):
     def absolute_url(self, format):
         return "%svideo/%s/%s" % format
 
-if getattr(settings, 'MASSMEDIA_USE_VOXTANT', False):
+if appsettings.USE_VOXTANT:
     class VoxantVideo(Video):
         asset_id = models.CharField(max_length=255,help_text='Voxant video asset ID (the `a` parameter)')
         layout_id = models.CharField(max_length=255,help_text='Voxant video asset ID (the `m` parameter)')
