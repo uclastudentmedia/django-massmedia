@@ -30,10 +30,10 @@ except ImportError:
 
 # Try to load a user-defined category model
 if appsettings.CATEGORIES_MODULE:
-    app_label, model_name = appsettings.CATEGORIES_MODULE.split('.')
-    Category = models.get_model(app_label, model_name)
+    CATEGORIES_MODULE = appsettings.CATEGORIES_MODULE
 else:
     # Otherwise use dummy category
+    CATEGORIES_MODULE = 'Category'
     class Category(models.Model):
         name = models.CharField(max_length=150)
         def __unicode__(self): return self.name
@@ -58,7 +58,7 @@ except ImportError:
 def parse_metadata(path):
     try:
         parser = createParser(unicode(path))
-    except InputStreamError:           
+    except InputStreamError:
         return
     if not parser:
         return
@@ -69,7 +69,7 @@ def parse_metadata(path):
     if not metadata:
         return
     data = {}
-    text = metadata.exportPlaintext(priority=None, human=False)           
+    text = metadata.exportPlaintext(priority=None, human=False)
     for line in text:
         if not line.strip().startswith('-'):
             key = line.strip().lower().split(':')[0]
@@ -116,8 +116,8 @@ class PickledObjectField(models.Field):
              raise TypeError('Lookup type %s is not supported.' %  lookup_type)
 
 class Media(models.Model):
-    title = models.CharField(max_length=255,unique=True)
-    slug = models.SlugField(unique=True)
+    title = models.CharField(max_length=255)
+    slug = models.SlugField()
     creation_date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(User, blank=True, null=True, limit_choices_to={'is_staff':True})
     one_off_author = models.CharField('one-off author', max_length=100, blank=True)
@@ -125,7 +125,7 @@ class Media(models.Model):
     caption = models.TextField(blank=True)
     metadata = PickledObjectField(blank=True)
     sites = models.ManyToManyField(Site,related_name='%(class)s_sites')
-    categories = models.ManyToManyField(Category, blank=True)
+    categories = models.ManyToManyField(CATEGORIES_MODULE, blank=True)
     reproduction_allowed = models.BooleanField("we have reproduction rights for this media", default=True)
     public = models.BooleanField(help_text="this media is publicly available", default=True)
     external_url = models.URLField(blank=True,null=True,help_text="If this URLField is set, the media will be pulled externally")
@@ -139,10 +139,11 @@ class Media(models.Model):
     class Meta:
         ordering = ('-creation_date',)
         abstract = True
-        
+        unique_together = (('slug', 'creation_date'),)
+    
     def __unicode__(self):
         return self.title
-
+    
     def get_absolute_url(self):
         if self.external_url:
             return self.external_url
@@ -288,7 +289,7 @@ class Collection(models.Model):
                         help_text='Select a .zip file of media to upload into a the Collection.')
     public = models.BooleanField(help_text="this collection is publicly available", default=True)
     sites = models.ManyToManyField(Site)
-    categories = models.ManyToManyField(Category, blank=True)
+    categories = models.ManyToManyField(CATEGORIES_MODULE, blank=True)
     
     class Meta:
         ordering = ['-creation_date']
