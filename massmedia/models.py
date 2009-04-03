@@ -54,6 +54,21 @@ try:
 except ImportError:
     extractMetadata = None
 
+class upload_to(object):
+    """
+    This tricky little bugger allows us to use all lowercase urls and stuff.
+    """
+    def __init__(self, format, field='file'):
+        self.format = format
+        self.field = field
+    
+    def __call__(self, instance, filename):
+        get_filename = instance._meta.get_field(self.field).get_filename
+        return os.path.join(self.get_directory_name(), get_filename(filename))
+    
+    def get_directory_name(self):
+        import datetime
+        return os.path.normpath(datetime.datetime.now().strftime(self.format)).lower()
 
 def parse_metadata(path):
     try:
@@ -150,7 +165,7 @@ class Media(models.Model):
         if hasattr(self,'file') and getattr(self,'file',None):
             return self.absolute_url((
                 settings.MEDIA_URL,
-                self.creation_date.strftime("%Y/%b/%d"),
+                '/'.join([self.creation_date.strftime("%Y"), self.creation_date.strftime("%b").lower(), self.creation_date.strftime("%d")]),
                 os.path.basename(self.file.path)))
         return ''
         
@@ -212,7 +227,7 @@ class Media(models.Model):
         }))
         
 class Image(Media):
-    file = models.ImageField(upload_to='img/%Y/%b/%d', blank=True, null=True)
+    file = models.ImageField(upload_to=upload_to('img/%Y/%b/%d'), blank=True, null=True)
     
     def save(self, *args, **kwargs):
         if iptc:
@@ -242,7 +257,7 @@ class Image(Media):
         return "%simg/%s/%s" % format
 
 class Video(Media):
-    file = models.FileField(upload_to='video/%Y/%b/%d', blank=True, null=True)
+    file = models.FileField(upload_to=upload_to('video/%Y/%b/%d'), blank=True, null=True)
     thumbnail = models.ForeignKey(Image, null=True, blank=True)
     
     def thumb(self):
@@ -262,7 +277,7 @@ if appsettings.USE_VOXANT:
             return "%svoxantvideo/%s/%s" % format
     
 class Audio(Media):
-    file = models.FileField(upload_to='audio/%Y/%b/%d', blank=True, null=True)
+    file = models.FileField(upload_to=upload_to('audio/%Y/%b/%d'), blank=True, null=True)
     
     class Meta:
         verbose_name_plural = 'audio'
@@ -271,7 +286,7 @@ class Audio(Media):
         return "%saudio/%s/%s" % format
 
 class Flash(Media):
-    file = models.FileField(upload_to='flash/%Y/%b/%d', blank=True, null=True)
+    file = models.FileField(upload_to=upload_to('flash/%Y/%b/%d'), blank=True, null=True)
     
     class Meta:
         verbose_name_plural = 'flash'
