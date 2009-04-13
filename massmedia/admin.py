@@ -6,7 +6,6 @@ from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.conf.urls.defaults import patterns, url
 from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
-from django.template.defaultfilters import slugify
 
 from django.contrib.admin.widgets import ForeignKeyRawIdWidget
 from django.db.models.fields.related import ManyToOneRel
@@ -52,7 +51,7 @@ class GenericCollectionTabularInline(GenericCollectionInlineModelAdmin):
 
 class MediaAdmin(object):
     fieldsets = (
-        (None, {'fields':('title','slug','caption')}),
+        (None, {'fields':('title','caption')}),
         ('Credit',{'fields':('author','one_off_author','credit','reproduction_allowed')}),
         ('Metadata',{'fields':('metadata','mime_type')}),
         ('Content',{'fields':('external_url','file')}),
@@ -65,7 +64,6 @@ class MediaAdmin(object):
     )
     list_display = ('title', 'author', 'mime_type', 'public', 'creation_date')
     list_filter = ('sites', 'creation_date','public')
-    prepopulated_fields = {'slug': ('title',)}
     date_hierarchy = 'creation_date'
     search_fields = ('caption', 'file')
     
@@ -107,10 +105,9 @@ class CollectionInline(admin.TabularInline):
     model = CollectionRelation
 
 class CollectionAdmin(admin.ModelAdmin):
-    fields = ('title','slug','caption','zip_file','public','categories','sites')
+    fields = ('title','caption','zip_file','public','categories','sites')
     list_display = ('title','caption', 'public', 'creation_date')
     list_filter = ('sites', 'creation_date','public')
-    prepopulated_fields = {'slug': ('title',)}
     date_hierarchy = 'creation_date'
     search_fields = ('caption',)
     inlines = (CollectionInline,)
