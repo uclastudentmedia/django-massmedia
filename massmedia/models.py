@@ -14,6 +14,8 @@ import mimetypes
 import os
 import zipfile
 
+from populous_utils.fields import AutoSlugField
+
 # Patch mimetypes w/ any extra types
 mimetypes.types_map.update(appsettings.EXTRA_MIME_TYPES)
 
@@ -37,7 +39,7 @@ else:
     class Category(models.Model):
         name = models.CharField(max_length=150)
         def __unicode__(self): return self.name
-        
+
 try:
     import Image as PilImage
 except ImportError:
@@ -61,11 +63,11 @@ class upload_to(object):
     def __init__(self, format, field='file'):
         self.format = format
         self.field = field
-    
+
     def __call__(self, instance, filename):
         get_filename = instance._meta.get_field(self.field).get_filename
         return os.path.join(self.get_directory_name(), get_filename(filename))
-    
+
     def get_directory_name(self):
         import datetime
         return os.path.normpath(datetime.datetime.now().strftime(self.format)).lower()
@@ -132,7 +134,7 @@ class PickledObjectField(models.Field):
 
 class Media(models.Model):
     title = models.CharField(max_length=255)
-    slug = models.SlugField()
+    slug = AutoSlugField(max_length=50, overwrite=True, populate_from=("title",))
     creation_date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(User, blank=True, null=True, limit_choices_to={'is_staff':True})
     one_off_author = models.CharField('one-off author', max_length=100, blank=True)
@@ -147,7 +149,7 @@ class Media(models.Model):
     mime_type = models.CharField(max_length=150,blank=True,null=True)
     width = models.IntegerField(blank=True, null=True, help_text="The width of the widget for the media")
     height = models.IntegerField(blank=True, null=True, help_text="The height of the widget for the media")
-    
+
     widget_template = models.CharField(max_length=255,blank=True,null=True,
                 help_text='The template name used to generate the widget (defaults to mime_type layout)')
 
@@ -155,10 +157,10 @@ class Media(models.Model):
         ordering = ('-creation_date',)
         abstract = True
         unique_together = (('slug', 'creation_date'),)
-    
+
     def __unicode__(self):
         return self.title
-    
+
     def get_absolute_url(self):
         if self.external_url:
             return self.external_url
@@ -168,25 +170,25 @@ class Media(models.Model):
                 '/'.join([self.creation_date.strftime("%Y"), self.creation_date.strftime("%b").lower(), self.creation_date.strftime("%d")]),
                 os.path.basename(self.file.path)))
         return ''
-        
+
     def absolute_url(self, format):
         raise NotImplementedError
-    
+
     def save(self, *args, **kwargs):
         if self.file and not self.mime_type:
             self.mime_type = mimetypes.guess_type(self.file.path)[0]
         if not(self.metadata) and self.file and extractMetadata:
             self.metadata = parse_metadata(self.file.path) or ''
         super(Media, self).save(*args, **kwargs)
-    
-    
+
+
     def get_mime_type(self):
         if self.mime_type:
             return self.mime_type
         if self.metadata and 'mime_type' in self.metadata:
             return self.metadata['mime_type']
         return
-    
+
     def get_template(self):
         mime_type = self.get_mime_type()
         if self.widget_template:
@@ -219,16 +221,16 @@ class Media(models.Model):
                         return MediaTemplate.objects.get(mimetype=mime_type.split('/')[0])
                     except MediaTemplate.DoesNotExist:
                         return MediaTemplate.objects.get(mimetype='').tempate()
-       
-    def render_template(self): 
+
+    def render_template(self):
         return self.get_template().render(Context({
             'media':self,
             'MEDIA_URL':settings.MEDIA_URL
         }))
-        
+
 class Image(Media):
     file = models.ImageField(upload_to=upload_to('img/%Y/%b/%d'), blank=True, null=True)
-    
+
     def save(self, *args, **kwargs):
         if iptc:
             try:
@@ -236,7 +238,7 @@ class Image(Media):
             except:
                 pass
         super(Image, self).save(*args, **kwargs)
-    
+
     def thumb(self):
         if self.file:
             thumbnail = '%s.thumb%s'%os.path.splitext(self.file.path)
@@ -252,19 +254,19 @@ class Image(Media):
                         (self.get_absolute_url(),self.get_absolute_url())
     thumb.allow_tags = True
     thumb.short_description = 'Thumbnail'
-    
+
     def absolute_url(self, format):
         return "%simg/%s/%s" % format
 
 class Video(Media):
     file = models.FileField(upload_to=upload_to('video/%Y/%b/%d'), blank=True, null=True)
     thumbnail = models.ForeignKey(Image, null=True, blank=True)
-    
+
     def thumb(self):
         return self.thumbnail.thumb()
     thumb.allow_tags = True
     thumb.short_description = 'Thumbnail'
-    
+
     def absolute_url(self, format):
         return "%svideo/%s/%s" % format
 
@@ -272,29 +274,29 @@ if appsettings.USE_VOXANT:
     class VoxantVideo(Video):
         asset_id = models.CharField(max_length=255,help_text='Voxant video asset ID (the `a` parameter)')
         layout_id = models.CharField(max_length=255,help_text='Voxant video asset ID (the `m` parameter)')
-        
+
         def absolute_url(self, format):
             return "%svoxantvideo/%s/%s" % format
-    
+
 class Audio(Media):
     file = models.FileField(upload_to=upload_to('audio/%Y/%b/%d'), blank=True, null=True)
-    
+
     class Meta:
         verbose_name_plural = 'audio'
-    
+
     def absolute_url(self, format):
         return "%saudio/%s/%s" % format
 
 class Flash(Media):
     file = models.FileField(upload_to=upload_to('flash/%Y/%b/%d'), blank=True, null=True)
-    
+
     class Meta:
         verbose_name_plural = 'flash'
-    
+
     def absolute_url(self, format):
         return "%sflash/%s/%s" % format
-    
-   
+
+
 class Collection(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
     title = models.CharField(max_length=255, unique=True)
@@ -305,18 +307,18 @@ class Collection(models.Model):
     public = models.BooleanField(help_text="this collection is publicly available", default=True)
     sites = models.ManyToManyField(Site)
     categories = models.ManyToManyField(CATEGORIES_MODULE, blank=True)
-    
+
     class Meta:
         ordering = ['-creation_date']
         get_latest_by = 'creation_date'
 
     def __unicode__(self):
         return self.title
- 
+
     def save(self, *args, **kwargs):
         super(Collection, self).save(*args, **kwargs)
         self.process_zipfile()
-        
+
     def process_zipfile(self):
         if self.zip_file and os.path.isfile(self.zip_file.path):
             zip = zipfile.ZipFile(self.zip_file.path)
@@ -352,7 +354,7 @@ class Collection(models.Model):
                         media = model.objects.get(slug=slug) #XXX
                     except model.DoesNotExist:
                         media = model(title=title, slug=slug)
-                        media.file.save(filename, ContentFile(data))                      
+                        media.file.save(filename, ContentFile(data))
                         # XXX: Make site relations possible, send signals
                         media.sites.add(Site.objects.get_current())
                         CollectionRelation(content_object=media,collection=self).save()
@@ -367,17 +369,17 @@ class CollectionRelation(models.Model):
     content_type = models.ForeignKey(ContentType, limit_choices_to=collection_limits)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
-    
+
     def __unicode__(self):
         return unicode(self.content_object)
-        
+
 class MediaTemplate(models.Model):
     name = models.CharField(max_length=255)
     mimetype = models.CharField(max_length=255,null=True,blank=True)
     content = models.TextField()
-    
+
     def __unicode__(self):
         return self.name
-    
+
     def template(self):
         return Template(self.content)
