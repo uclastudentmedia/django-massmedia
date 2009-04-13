@@ -1,0 +1,60 @@
+{% extends "admin/change_form.html" %}
+{% load adminmedia admin_list i18n %}
+
+{% block extrahead %}{{ block.super }}
+  <script type="text/javascript" src="../../../jsi18n/"></script>
+  {{ media }}
+{% endblock %}
+
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="../../../">{% trans "Home" %}</a>
+    &rsaquo;
+    <a href="../../">{{ ct_opts.app_label|capfirst }}</a>
+    &rsaquo;
+    <a href="../../{{ ct_opts.module_name }}">{{ ct_opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo;
+    {% blocktrans %}Add to {% endblocktrans %}{{ collection_opts.verbose_name|capfirst }}
+{% endblock %}
+
+{% block content %}
+  <div id="content-main">
+    {% block object-tools %}{% endblock %}
+    <p>Select which {{ collection_opts.verbose_name|capfirst }}(s) to associate the {{ ct_opts.verbose_name_plural|capfirst }} to.</p>
+    <form action="" method="post" id="{{ collection_opts.module_name }}_form">{% block form_top %}{% endblock %}
+      {{ formset.management_form }}
+    <div>
+    {% if formset.errors %}
+        <p class="errornote">
+        {% blocktrans count formset.errors|length as counter %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktrans %}
+        </p>{{formset.errors}}
+        <ul class="errorlist">{% for field_name, error in formset.errors.items %}<li>{{ error }}</li>{% endfor %}</ul>
+    {% endif %}
+    
+    <div class="inline-group">
+      <div class="tabular inline-related {% if forloop.last %}last-related{% endif %}">
+        <fieldset class="module">
+          <table>
+            <thead><tr>{% for field in formset.forms|first %}
+                <th>{{ field.label }}</th>{% endfor %}
+            </tr></thead>
+            {% for c_form in formset.forms %}
+            <tr class="{% cycle row1,row2 %}">{% for field in c_form %}
+              <td class="{{ field.name }}">
+                {{ field.errors }}
+                {{ field }}
+              </td>{% endfor %}
+            </tr>{% endfor %}
+          </table>
+        </fieldset>
+      </div>
+    </div>
+    
+    {{ form.as_p }}
+      <div class="submit-row">
+        <input type="submit" value="{% trans 'Add' %} {{ ct_opts.verbose_name_plural|capfirst }} to {{ collection_opts.verbose_name|capfirst }}(s)" class="default" name="_save" />
+      </div>
+    </div>
+    </form>
+  </div>
+{% endblock %}
