@@ -300,7 +300,7 @@ class Flash(Media):
 class Collection(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
     title = models.CharField(max_length=255, unique=True)
-    slug = models.SlugField(unique=True)
+    slug = AutoSlugField(max_length=50, overwrite=True, populate_from=("title",))
     caption = models.TextField(blank=True)
     zip_file = models.FileField('Media files in a .zip', upload_to='tmp', blank=True,null=True,
                         help_text='Select a .zip file of media to upload into a the Collection.')
