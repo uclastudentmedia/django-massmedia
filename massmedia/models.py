@@ -14,7 +14,7 @@ import mimetypes
 import os
 import zipfile
 
-from populous_utils.fields import AutoSlugField
+from django_extensions.db.fields import AutoSlugField
 
 # Patch mimetypes w/ any extra types
 mimetypes.types_map.update(appsettings.EXTRA_MIME_TYPES)
