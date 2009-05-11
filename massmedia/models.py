@@ -147,8 +147,8 @@ class Media(models.Model):
     public = models.BooleanField(help_text="this media is publicly available", default=True)
     external_url = models.URLField(blank=True,null=True,help_text="If this URLField is set, the media will be pulled externally")
     mime_type = models.CharField(max_length=150,blank=True,null=True)
-    width = models.IntegerField(blank=True, null=True, help_text="The width of the widget for the media")
-    height = models.IntegerField(blank=True, null=True, help_text="The height of the widget for the media")
+    width = models.IntegerField(blank=True, null=True)
+    height = models.IntegerField(blank=True, null=True)
 
     widget_template = models.CharField(max_length=255,blank=True,null=True,
                 help_text='The template name used to generate the widget (defaults to mime_type layout)')
