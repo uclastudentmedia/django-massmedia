@@ -198,7 +198,7 @@ class Media(models.Model):
                 return MediaTemplate.objects.get(name=self.widget_template).template()
         elif mime_type is None:
             if appsettings.TEMPLATE_MODE == appsettings.FILE_SYSTEM:
-                if isinstance(self, VoxantVideo):
+                if appsettings.USE_VOXANT and isinstance(self, VoxantVideo):
                     return get_template('massmedia/voxant.html')
                 else:
                     return get_template('massmedia/generic.html')

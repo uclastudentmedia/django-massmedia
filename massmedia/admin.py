@@ -14,7 +14,7 @@ from massmedia import settings
 from massmedia.models import Image, Video, Audio, Flash, Collection,\
                              CollectionRelation, MediaTemplate
 
-if settings.USE_VOXANT:    
+if settings.USE_VOXANT:
     from massmedia.models import VoxantVideo
 
 class CollectionRelationForm(forms.Form):
