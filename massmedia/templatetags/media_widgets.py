@@ -13,12 +13,12 @@ class MassMediaNode(template.Node):
         self.args = list(args)
     
     def render(self, context):
-        self.args[0] = context.get(self.args[0],self.args[0])
-        if appsettings.USE_VOXANT and isinstance(self.args[0], basestring):
-            self.args[0] = VoxantVideo.objects.get(slug=self.args[0])
-        return self.args[0].get_template().render(template.RequestContext(context['request'], {
-        'media':self.args[0],
-    }))
+        media = context.get(self.args[0], self.args[0])
+        if appsettings.USE_VOXANT and isinstance(media, basestring):
+            media = VoxantVideo.objects.get(slug=media)
+        return media.get_template().render(template.RequestContext(context['request'], {
+            'media':media,
+        }))
 def show_media(parser, token):
     return MassMediaNode(*token.contents.split()[1:])
     
