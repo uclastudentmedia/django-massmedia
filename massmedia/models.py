@@ -246,7 +246,10 @@ class Image(Media):
             if not os.path.exists(thumbnail):
                 im = PilImage.open(self.file)
                 im.thumbnail(appsettings.THUMB_SIZE,PilImage.ANTIALIAS)
-                im.save(thumbnail,im.format)
+                try:
+                    im.save(thumbnail,im.format)
+                except KeyError:
+                    pass
             return '<a href="%s"><img src="%s%s"/></a>'%\
                         (self.get_absolute_url(),settings.MEDIA_URL,thumburl)
         elif self.external_url:
